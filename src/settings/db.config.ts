@@ -11,6 +11,6 @@ export default (): DatabaseConfig => ({
     url: CONFIG.DB_LINK,
     autoLoadEntities: true,
     // logging: ['query'],
-    synchronize: true,
+    synchronize: false,
   },
 });

@@ -1,7 +1,8 @@
-import { Column, Entity, OneToOne, Unique } from 'typeorm';
+import { Column, Entity, OneToMany, OneToOne, Unique } from 'typeorm';
 import { BaseEntity } from '../../../infrastructure/entities/base.entity';
 import { PasswordRecovery } from './password-recovery.entity';
 import { EmailConfirmation } from './email-confirmation.entity';
+import { Device } from '../../auth/domain/device.entity';
 
 @Entity()
 @Unique(['login', 'email'])
@@ -35,6 +36,9 @@ export class User extends BaseEntity {
 
   @OneToOne(() => PasswordRecovery, (pr) => pr.user)
   public passwordRecovery: PasswordRecovery;
+
+  @OneToMany(() => Device, (d) => d.user)
+  devices: Device[];
 
   public static create(data: {
     hash: string;
