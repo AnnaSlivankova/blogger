@@ -1,6 +1,7 @@
 import {
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Req,
@@ -56,7 +57,7 @@ export class DevicesController {
     const deviceId = req.params.deviceId;
     // if (!deviceId) throw new NotFoundException();
     const userId = req['userId'];
-
+    // if (!userId) throw new ForbiddenException();
     const isDeleted = await this.devicesService.deleteDeviceById(
       userId,
       deviceId,

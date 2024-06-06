@@ -32,7 +32,7 @@ export class DevicesService {
   }
 
   async deleteDeviceById(userId: string, deviceId: string): Promise<boolean> {
-    const device = await this.devicesRepository.getDevice(userId, deviceId);
+    const device = await this.devicesRepository.getByDeviceId(deviceId);
     if (!device) throw new NotFoundException();
     if (device.userId !== userId) throw new ForbiddenException();
 

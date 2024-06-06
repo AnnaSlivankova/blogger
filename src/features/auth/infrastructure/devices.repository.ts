@@ -60,4 +60,15 @@ export class DevicesRepository {
       return null;
     }
   }
+
+  async getByDeviceId(deviceId: string): Promise<Device | null> {
+    try {
+      return await this.device.findOne({
+        where: { deviceId },
+      });
+    } catch (e) {
+      console.log('DevicesRepository/getByDeviceId', e);
+      return null;
+    }
+  }
 }
