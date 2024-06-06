@@ -16,8 +16,8 @@ export const CONFIG = {
   CORP_EMAIL: process.env.CORP_EMAIL,
   CORP_PASS: process.env.CORP_PASS,
   JWT_SECRET: process.env.JWT_SECRET,
-  REFRESH_TTL: '20d',
-  ACCESS_TTL: '10d',
+  REFRESH_TTL: '20s',
+  ACCESS_TTL: '10s',
   AUTH_CRED: process.env.AUTH_CRED,
   LOGIN_CRED: process.env.LOGIN_CRED,
   PASS_CRED: process.env.PASS_CRED,
@@ -31,5 +31,5 @@ export enum PATH {
   USERS_SA = 'sa/users',
   AUTH = 'auth',
   TESTING = 'testing/all-data',
-  SECURITY = 'security',
+  DEVICES = 'security/devices',
 }

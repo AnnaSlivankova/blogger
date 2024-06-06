@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthRepository } from '../../infrastructure/auth.repository';
 import { RegisterUserInputModel } from '../../api/models/input/register-user.input.model';
 import { BcryptService } from '../../../../infrastructure/services/bcrypt.service';
 import { User } from '../../../users/domain/user.entity';
@@ -18,17 +17,24 @@ import { PasswordRecoveryRepository } from '../../../users/infrastructure/passwo
 import { NewPasswordRecoveryInputModel } from '../../api/models/input/new-password-recovery.input.model';
 import { LoginInputModel } from '../../api/models/input/login.input.model';
 import { CONFIG } from '../../../../settings/app.settings';
+import { Device } from '../../domain/device.entity';
+import { DevicesService } from './devices.service';
+import { DevicesRepository } from '../../infrastructure/devices.repository';
+import { RtBlackListRepository } from '../../infrastructure/rt-black-list.repository';
+import { RtBlackList } from '../../domain/rt-black-list.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private authRepository: AuthRepository,
     private bcryptService: BcryptService,
     private mailService: MailService,
     private usersRepository: UsersRepository,
     private jwtService: JwtService,
     private readonly emailConfirmationRepository: EmailConfirmationRepository,
     private readonly passwordRecoveryRepository: PasswordRecoveryRepository,
+    private devicesService: DevicesService,
+    private devicesRepository: DevicesRepository,
+    private readonly rtBlackListRepository: RtBlackListRepository,
   ) {}
 
   async registerUser(dto: RegisterUserInputModel): Promise<boolean> {
@@ -152,14 +158,65 @@ export class AuthService {
     );
     if (!isPasswordValid) throw new UnauthorizedException();
 
+    const device = Device.create(user, ip, userAgent);
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync({ userId: user.id }),
       this.jwtService.signAsync(
-        { userId: user.id },
+        { userId: user.id, deviceId: device.deviceId },
         { expiresIn: CONFIG.REFRESH_TTL },
       ),
     ]);
 
+    device.rt = refreshToken;
+    await this.devicesRepository.save(device);
+
     return { accessToken, refreshToken };
+  }
+
+  async logout(userId: string, deviceId: string, rt: string): Promise<boolean> {
+    const tokenForBlackList = RtBlackList.create(rt);
+    const isPuttedInBlackList = await this.rtBlackListRepository.putInBlackList(
+      [tokenForBlackList],
+    );
+    if (!isPuttedInBlackList) throw new BadRequestException();
+
+    return await this.devicesService.deleteDeviceById(userId, deviceId);
+  }
+
+  async refreshTokens(
+    userId: string,
+    deviceId: string,
+    rt: string,
+  ): Promise<{
+    refreshToken: string;
+    accessToken: string;
+  }> {
+    const user = await this.usersRepository.getUserById(userId);
+    if (!user) throw new UnauthorizedException();
+
+    const device = await this.devicesRepository.getDevice(userId, deviceId);
+    if (!device) throw new BadRequestException();
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync({ userId: user.id }),
+      this.jwtService.signAsync(
+        { userId: user.id, deviceId: device.deviceId },
+        { expiresIn: CONFIG.REFRESH_TTL },
+      ),
+    ]);
+
+    device.rt = refreshToken;
+
+    const tokenForBlackList = RtBlackList.create(rt);
+    const isPuttedInBlackList = await this.rtBlackListRepository.putInBlackList(
+      [tokenForBlackList],
+    );
+    if (!isPuttedInBlackList) throw new BadRequestException();
+
+    const isDeviceUpdated = await this.devicesRepository.save(device);
+    if (!isDeviceUpdated) throw new BadRequestException();
+
+    return { refreshToken, accessToken };
   }
 }

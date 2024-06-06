@@ -23,6 +23,7 @@ import { LoginInputModel } from './models/input/login.input.model';
 import { ResendRegistrationConfirmationInputModel } from './models/input/resend.registration.confirmation.input.model';
 import { PasswordRecoveryInputModel } from './models/input/password-recovery.input.model';
 import { NewPasswordRecoveryInputModel } from './models/input/new-password-recovery.input.model';
+import { RefreshTokenGuard } from '../../../infrastructure/guards/refresh.token.guard';
 
 @Controller(PATH.AUTH)
 @UseGuards(ThrottlerGuard)
@@ -109,10 +110,44 @@ export class AuthController {
   ) {
     const ip = req.ip;
     const userAgent = req.headers['user-agent'];
+
     const { refreshToken, accessToken } = await this.authService.login(
       inputDto,
       ip,
       userAgent,
+    );
+
+    this.setCookie(res, refreshToken);
+    res.status(200).send({ accessToken });
+    return;
+  }
+
+  @UseGuards(RefreshTokenGuard)
+  @Post('/logout')
+  @HttpCode(200)
+  async logout(@Req() req: Request, @Res() res: Response) {
+    const userId = req['userId'];
+    const deviceId = req['deviceId'];
+    const rt = req.cookies['refreshToken'];
+
+    const isLogout = await this.authService.logout(userId, deviceId, rt);
+    if (!isLogout) throw new InternalServerErrorException();
+    res.sendStatus(204);
+    return;
+  }
+
+  @UseGuards(RefreshTokenGuard)
+  @Post('/refresh-token')
+  @HttpCode(200)
+  async refreshTokens(@Req() req: Request, @Res() res: Response) {
+    const userId = req['userId'];
+    const deviceId = req['deviceId'];
+    const rt = req.cookies['refreshToken'];
+
+    const { refreshToken, accessToken } = await this.authService.refreshTokens(
+      userId,
+      deviceId,
+      rt,
     );
 
     this.setCookie(res, refreshToken);

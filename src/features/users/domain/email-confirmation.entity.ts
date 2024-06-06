@@ -57,7 +57,7 @@ export class EmailConfirmation {
     return ec;
   }
 
-  public confirmStatus(): EmailConfirmation {
+  public async confirmStatus(): Promise<EmailConfirmation> {
     if (this.isAlreadyConfirmed)
       throw new Error('Email had already been confirmed');
     if (this.isExpired) throw new Error('Confirmation code expired');

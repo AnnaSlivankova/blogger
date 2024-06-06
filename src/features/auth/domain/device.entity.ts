@@ -5,16 +5,13 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../users/domain/user.entity';
+import crypto from 'crypto';
 
 @Entity()
 export class Device {
-  // @PrimaryGeneratedColumn('uuid')
-  // public id: string;
-
   @PrimaryColumn({ type: 'uuid' })
   public deviceId: string;
 
@@ -40,9 +37,6 @@ export class Device {
   })
   public userAgent: string;
 
-  @Column({ type: 'timestamptz' })
-  public lastActiveDate: Date;
-
   @Column({
     type: 'character varying',
     nullable: false,
@@ -54,4 +48,14 @@ export class Device {
 
   @UpdateDateColumn()
   public updatedAt: Date;
+
+  public static create(user: User, ip: string, userAgent: string): Device {
+    const d = new Device();
+    d.user = user;
+    d.deviceId = crypto.randomUUID();
+    d.userAgent = userAgent ? userAgent : 'unknown';
+    d.ip = ip ? ip : 'unknown';
+
+    return d;
+  }
 }
