@@ -21,7 +21,10 @@ export class PostsQueryRepository {
 
   async getPostById(id: string): Promise<PostOutputModel | null> {
     try {
-      const post = await this.postRepository.findOne({ where: { id } });
+      const post = await this.postRepository.findOne({
+        where: { id },
+        relations: ['blog'],
+      });
       return postOutputModelMapper(post);
     } catch (e) {
       console.log('PostsQueryRepository/getPostById', e);
@@ -40,6 +43,7 @@ export class PostsQueryRepository {
 
       const [items, totalCount] = await this.postRepository.findAndCount({
         where: { blogId },
+        relations: ['blog'],
         order: { [sortBy]: direction },
         skip: skip,
         take: pageSize,
