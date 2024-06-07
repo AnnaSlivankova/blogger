@@ -4,7 +4,6 @@ import {
   HttpCode,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { PATH } from '../../settings/app.settings';
 import { EntityManager } from 'typeorm';
 import { User } from '../users/domain/user.entity';
 import { PasswordRecovery } from '../users/domain/password-recovery.entity';
