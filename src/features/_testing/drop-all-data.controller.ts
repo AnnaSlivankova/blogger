@@ -9,8 +9,6 @@ import { EntityManager } from 'typeorm';
 import { User } from '../users/domain/user.entity';
 import { PasswordRecovery } from '../users/domain/password-recovery.entity';
 import { EmailConfirmation } from '../users/domain/email-confirmation.entity';
-import { Device } from '../auth/domain/device.entity';
-import { RtBlackList } from '../auth/domain/rt-black-list.entity';
 
 @Controller()
 export class DropAllDataController {
@@ -31,12 +29,6 @@ export class DropAllDataController {
           .createQueryBuilder()
           .delete()
           .from(EmailConfirmation)
-          .execute(),
-        this.entityManager.createQueryBuilder().delete().from(Device).execute(),
-        this.entityManager
-          .createQueryBuilder()
-          .delete()
-          .from(RtBlackList)
           .execute(),
       ]);
       return;
