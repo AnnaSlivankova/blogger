@@ -9,6 +9,7 @@ import { CONFIG } from './settings/app.settings';
 import { DropAllDataController } from './features/_testing/drop-all-data.controller';
 import { AuthModule } from './features/auth/auth.module';
 import { AppController } from './app.controller';
+import { BlogsModule } from './features/blogs/blogs.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { AppController } from './app.controller';
     }),
     UsersModule,
     AuthModule,
+    BlogsModule,
   ],
   controllers: [DropAllDataController, AppController],
   providers: [],
