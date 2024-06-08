@@ -32,7 +32,7 @@ export class PostsQueryRepository {
     }
   }
 
-  async getAll(
+  async getAllByBlogId(
     blogId: string,
     query: QueryParams,
   ): Promise<PaginationOutputModel<PostOutputModel> | null> {
@@ -43,6 +43,36 @@ export class PostsQueryRepository {
 
       const [items, totalCount] = await this.postRepository.findAndCount({
         where: { blogId },
+        relations: ['blog'],
+        order: { [sortBy]: direction },
+        skip: skip,
+        take: pageSize,
+      });
+
+      const pagesCount = Math.ceil(totalCount / pageSize);
+
+      return {
+        page: pageNumber,
+        pageSize,
+        pagesCount,
+        totalCount,
+        items: items.map((p) => postOutputModelMapper(p)),
+      };
+    } catch (e) {
+      console.log('PostsQueryRepository/getAllByBlogId', e);
+      return null;
+    }
+  }
+
+  async getAll(
+    query: QueryParams,
+  ): Promise<PaginationOutputModel<PostOutputModel> | null> {
+    try {
+      const { pageSize, pageNumber, sortDirection, sortBy } = query;
+      const skip = query.getSkipItemsCount();
+      const direction = sortDirection === SortDirection.ASC ? 'ASC' : 'DESC';
+
+      const [items, totalCount] = await this.postRepository.findAndCount({
         relations: ['blog'],
         order: { [sortBy]: direction },
         skip: skip,

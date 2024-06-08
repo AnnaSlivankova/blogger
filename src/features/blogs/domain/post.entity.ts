@@ -38,6 +38,9 @@ export class Post extends BaseEntity {
   @Column()
   blogId: string;
 
+  @Column({ type: 'character varying', nullable: false })
+  public blogName: string;
+
   public static create(
     blog: Blog,
     data: {
@@ -45,12 +48,14 @@ export class Post extends BaseEntity {
       shortDescription: string;
       content: string;
     },
+    blogName: string,
   ): Post {
     const p = new Post();
     p.blog = blog;
     p.title = data.title;
     p.shortDescription = data.shortDescription;
     p.content = data.content;
+    p.blogName = blogName;
 
     return p;
   }

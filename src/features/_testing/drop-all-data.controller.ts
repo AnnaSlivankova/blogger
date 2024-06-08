@@ -10,6 +10,8 @@ import { PasswordRecovery } from '../users/domain/password-recovery.entity';
 import { EmailConfirmation } from '../users/domain/email-confirmation.entity';
 import { Device } from '../auth/domain/device.entity';
 import { RtBlackList } from '../auth/domain/rt-black-list.entity';
+import { Blog } from '../blogs/domain/blog.entity';
+import { Post } from '../blogs/domain/post.entity';
 
 @Controller()
 export class DropAllDataController {
@@ -37,6 +39,13 @@ export class DropAllDataController {
           .delete()
           .from(RtBlackList)
           .execute(),
+        this.entityManager.createQueryBuilder().delete().from(Blog).execute(),
+        this.entityManager
+          .createQueryBuilder()
+          .delete()
+          .from(RtBlackList)
+          .execute(),
+        this.entityManager.createQueryBuilder().delete().from(Post).execute(),
       ]);
       return;
     } catch (e) {

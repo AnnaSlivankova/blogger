@@ -47,7 +47,7 @@ export class BlogsService {
     const blog = await this.blogsRepository.getById(blogId);
     if (!blog) throw new NotFoundException(`Blog with ID ${blogId} not found`);
 
-    const post = Post.create(blog, inputDto);
+    const post = Post.create(blog, inputDto, blog.name);
 
     return await this.postsRepository.save(post);
   }
