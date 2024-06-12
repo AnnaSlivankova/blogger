@@ -19,7 +19,7 @@ import { join } from 'path';
         from: `no-reply <${CONFIG.CORP_EMAIL}>`,
       },
       template: {
-        dir: join(__dirname, '/templates'),
+        dir: join(__dirname, './'),
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,

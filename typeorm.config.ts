@@ -1,9 +1,9 @@
 import { DataSource } from 'typeorm';
-import { CONFIG } from './settings/app.settings';
+import { CONFIG } from './src/settings/app.settings';
 
 export default new DataSource({
   url: CONFIG.DB_LINK,
   type: 'postgres',
-  migrations: ['src/migrations/*.ts'],
+  migrations: ['migrations/*.ts'],
   entities: ['src/**/*.entity.ts'],
 });
