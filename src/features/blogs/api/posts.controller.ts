@@ -20,8 +20,6 @@ export class PostsController {
   async getAllPosts(
     @Query() query: QueryParams,
   ): Promise<PaginationOutputModel<PostOutputModel>> {
-    console.log('in in PostsController/getAllPosts');
-    console.log('query', query);
     const posts = await this.postsQueryRepository.getAll(query);
     if (!posts) throw new BadRequestException();
     return posts;

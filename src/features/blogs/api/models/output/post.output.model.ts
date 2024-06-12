@@ -26,7 +26,6 @@ export const postOutputModelMapper = (
   myStatus?: any,
   newestLikes?: any[],
 ): PostOutputModel => {
-  console.log('post', post);
   const outputModel = new PostOutputModel();
   outputModel.id = post.id;
   outputModel.title = post.title;

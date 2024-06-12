@@ -41,14 +41,17 @@ export class PostsQueryRepository {
       const skip = query.getSkipItemsCount();
       const direction = sortDirection === SortDirection.ASC ? 'ASC' : 'DESC';
 
-      const [items, totalCount] = await this.postRepository.findAndCount({
-        where: { blogId },
-        relations: ['blog'],
-        order: { [sortBy]: direction },
-        skip: skip,
-        take: pageSize,
-      });
+      const isBlogField = sortBy.includes('blogName');
+      const sortField = isBlogField ? 'blog.name' : `post.${sortBy}`;
 
+      const queryBuilder = this.postRepository
+        .createQueryBuilder('post')
+        .leftJoinAndSelect('post.blog', 'blog')
+        .orderBy(sortField, direction)
+        .skip(skip)
+        .take(pageSize);
+
+      const [items, totalCount] = await queryBuilder.getManyAndCount();
       const pagesCount = Math.ceil(totalCount / pageSize);
 
       return {
@@ -72,13 +75,17 @@ export class PostsQueryRepository {
       const skip = query.getSkipItemsCount();
       const direction = sortDirection === SortDirection.ASC ? 'ASC' : 'DESC';
 
-      const [items, totalCount] = await this.postRepository.findAndCount({
-        relations: ['blog'],
-        order: { [sortBy]: direction },
-        skip: skip,
-        take: pageSize,
-      });
+      const isBlogField = sortBy.includes('blogName');
+      const sortField = isBlogField ? 'blog.name' : `post.${sortBy}`;
 
+      const queryBuilder = this.postRepository
+        .createQueryBuilder('post')
+        .leftJoinAndSelect('post.blog', 'blog')
+        .orderBy(sortField, direction)
+        .skip(skip)
+        .take(pageSize);
+
+      const [items, totalCount] = await queryBuilder.getManyAndCount();
       const pagesCount = Math.ceil(totalCount / pageSize);
 
       return {

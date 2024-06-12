@@ -2,10 +2,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Post } from '../domain/post.entity';
-import {
-  PostOutputModel,
-  postOutputModelMapper,
-} from '../api/models/output/post.output.model';
 
 @Injectable()
 export class PostsRepository {

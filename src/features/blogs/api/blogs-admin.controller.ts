@@ -122,12 +122,9 @@ export class BlogsAdminController {
     @Param('blogId') blogId: string,
     @Query() query: QueryParams,
   ): Promise<PaginationOutputModel<PostOutputModel>> {
-    // const blog = await this.blogsQueryRepository.getById(blogId);
-    // if (!blog) throw new NotFoundException();
-
     const posts = await this.postsQueryRepository.getAllByBlogId(blogId, query);
-    //todo check if blogId is invalid
     if (!posts) throw new NotFoundException();
+
     return posts;
   }
 }
