@@ -10,16 +10,35 @@ import { Post } from './domain/post.entity';
 import { BlogsAdminController } from './api/blogs-admin.controller';
 import { BlogsController } from './api/blogs.controller';
 import { PostsController } from './api/posts.controller';
+import { Comment } from './domain/comment.entity';
+import { CommentsController } from './api/comments.controller';
+import { CommentsRepository } from './infrastructure/comments.repository';
+import { CommentsService } from './application/services/comments.service';
+import { CommentsQueryRepository } from './infrastructure/comments-query.repository';
+import { UsersModule } from '../users/users.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Blog, Post])],
-  controllers: [BlogsAdminController, BlogsController, PostsController],
+  imports: [
+    TypeOrmModule.forFeature([Blog, Post, Comment]),
+    UsersModule,
+    AuthModule,
+  ],
+  controllers: [
+    BlogsAdminController,
+    BlogsController,
+    PostsController,
+    CommentsController,
+  ],
   providers: [
     BlogsService,
     BlogsRepository,
     BlogsQueryRepository,
     PostsRepository,
     PostsQueryRepository,
+    CommentsService,
+    CommentsRepository,
+    CommentsQueryRepository,
   ],
   exports: [BlogsService],
 })

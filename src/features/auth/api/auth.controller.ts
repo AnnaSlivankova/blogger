@@ -37,7 +37,7 @@ export class AuthController {
   @Get('/me')
   @HttpCode(200)
   async me(@Req() req: Request) {
-    const userId = req['user'].userId;
+    const userId = req['userId'];
     const user = await this.usersQueryRepository.getById(userId);
     if (!user) throw new UnauthorizedException();
 

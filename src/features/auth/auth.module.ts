@@ -34,5 +34,6 @@ import { RtBlackListRepository } from './infrastructure/rt-black-list.repository
     DevicesService,
     RtBlackListRepository,
   ],
+  exports: [RtBlackListRepository],
 })
 export class AuthModule {}
