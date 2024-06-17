@@ -4,6 +4,7 @@ import { PasswordRecovery } from './password-recovery.entity';
 import { EmailConfirmation } from './email-confirmation.entity';
 import { Device } from '../../auth/domain/device.entity';
 import { Comment } from '../../blogs/domain/comment.entity';
+import { CommentLikeStatus } from '../../blogs/domain/comment-like-status.entity';
 
 @Entity()
 @Unique(['login', 'email'])
@@ -43,6 +44,9 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Comment, (c) => c.user)
   comments: Comment[];
+
+  @OneToMany(() => CommentLikeStatus, (cl) => cl.user)
+  commentLikes: CommentLikeStatus[];
 
   public static create(data: {
     hash: string;
