@@ -12,6 +12,7 @@ import { Device } from '../auth/domain/device.entity';
 import { RtBlackList } from '../auth/domain/rt-black-list.entity';
 import { Blog } from '../blogs/domain/blog.entity';
 import { Post } from '../blogs/domain/post.entity';
+import { Comment } from '../blogs/domain/comment.entity';
 
 @Controller()
 export class DropAllDataController {
@@ -40,12 +41,12 @@ export class DropAllDataController {
           .from(RtBlackList)
           .execute(),
         this.entityManager.createQueryBuilder().delete().from(Blog).execute(),
+        this.entityManager.createQueryBuilder().delete().from(Post).execute(),
         this.entityManager
           .createQueryBuilder()
           .delete()
-          .from(RtBlackList)
+          .from(Comment)
           .execute(),
-        this.entityManager.createQueryBuilder().delete().from(Post).execute(),
       ]);
       return;
     } catch (e) {

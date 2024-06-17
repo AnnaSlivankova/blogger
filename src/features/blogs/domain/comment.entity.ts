@@ -46,15 +46,9 @@ export class Comment extends BaseEntity {
     return c;
   }
 
-  // public update(data: {
-  //   name: string;
-  //   description: string;
-  //   websiteUrl: string;
-  // }): Blog {
-  //   this.name = data.name;
-  //   this.description = data.description;
-  //   this.websiteUrl = data.websiteUrl;
-  //
-  //   return this;
-  // }
+  public update(data: { content: string }): Comment {
+    this.content = data.content;
+
+    return this;
+  }
 }

@@ -21,7 +21,10 @@ export class CommentsQueryRepository {
 
   async getById(id: string): Promise<CommentOutputModel | null> {
     try {
-      const comment = await this.commentsRepository.findOne({ where: { id } });
+      const comment = await this.commentsRepository.findOne({
+        where: { id },
+        relations: ['user', 'post'],
+      });
       return commentOutputModelMapper(comment);
     } catch (e) {
       console.log('CommentsQueryRepository/getById', e);
@@ -43,11 +46,12 @@ export class CommentsQueryRepository {
         .createQueryBuilder('comment')
         .leftJoinAndSelect('comment.user', 'user')
         .leftJoinAndSelect('comment.post', 'post')
-        .orderBy(sortBy, direction)
+        .orderBy(`comment.${sortBy}`, direction)
         .skip(skip)
         .take(pageSize);
 
       const [items, totalCount] = await queryBuilder.getManyAndCount();
+
       const pagesCount = Math.ceil(totalCount / pageSize);
 
       return {

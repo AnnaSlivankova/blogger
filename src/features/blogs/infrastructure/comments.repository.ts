@@ -20,22 +20,25 @@ export class CommentsRepository {
     }
   }
 
-  // async getById(id: string): Promise<Blog | null> {
-  //   try {
-  //     return await this.blogRepository.findOne({ where: { id } });
-  //   } catch (e) {
-  //     console.log('CommentsRepository/getById', e);
-  //     return null;
-  //   }
-  // }
-  //
-  // async delete(id: string): Promise<boolean> {
-  //   try {
-  //     const res = await this.blogRepository.delete({ id });
-  //     return !!res.affected;
-  //   } catch (e) {
-  //     console.log('CommentsRepository/delete', e);
-  //     return false;
-  //   }
-  // }
+  async getById(id: string): Promise<Comment | null> {
+    try {
+      return await this.commentsRepository.findOne({
+        where: { id },
+        relations: ['user', 'post'],
+      });
+    } catch (e) {
+      console.log('CommentsRepository/getById', e);
+      return null;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    try {
+      const res = await this.commentsRepository.delete({ id });
+      return !!res.affected;
+    } catch (e) {
+      console.log('CommentsRepository/delete', e);
+      return false;
+    }
+  }
 }

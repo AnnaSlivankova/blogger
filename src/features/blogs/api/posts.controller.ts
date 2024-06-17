@@ -22,7 +22,7 @@ import { CommentOutputModel } from './models/output/comment.output.model';
 import { CommentsQueryRepository } from '../infrastructure/comments-query.repository';
 import { AuthBearerGuard } from '../../../infrastructure/guards/auth.bearer.guard';
 import { Request, Response } from 'express';
-import { RefreshTokenGuard } from '../../../infrastructure/guards/refresh.token.guard';
+import { UserIdFromAcToken } from '../../../infrastructure/decorators/transform/userId-from-ac-token.decorator';
 
 @Controller(PATH.POSTS)
 export class PostsController {
@@ -58,6 +58,7 @@ export class PostsController {
     @Res() res: Response,
   ): Promise<CommentOutputModel> {
     const userId = req['userId'];
+
     const commentId = await this.commentsService.create({
       postId,
       userId,
@@ -72,15 +73,15 @@ export class PostsController {
     return;
   }
 
-  @UseGuards(RefreshTokenGuard)
   @Get(':postId/comments')
   async getAllPostComments(
     @Param('postId') postId: string,
     @Query() query: QueryParams,
-    @Req() req: Request,
-    @Res() res: Response,
+    @UserIdFromAcToken() userId: string | undefined,
   ): Promise<PaginationOutputModel<CommentOutputModel>> {
-    const userId: string | undefined = req['userId'];
+    const post = await this.postsQueryRepository.getPostById(postId);
+    if (!post) throw new NotFoundException();
+
     const comments = await this.commentsQueryRepository.getAll(
       userId,
       postId,
@@ -88,7 +89,6 @@ export class PostsController {
     );
     if (!comments) throw new NotFoundException();
 
-    res.status(200).send(comments);
-    return;
+    return comments;
   }
 }

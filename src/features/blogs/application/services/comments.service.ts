@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,6 +8,7 @@ import { CommentsRepository } from '../../infrastructure/comments.repository';
 import { Comment } from '../../domain/comment.entity';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { PostsRepository } from '../../infrastructure/posts.repository';
+import { UpdateCommentInputModel } from '../../api/models/input/update-comment.input.model';
 
 @Injectable()
 export class CommentsService {
@@ -32,65 +34,26 @@ export class CommentsService {
     return await this.commentsRepository.save(comment);
   }
 
-  //
-  // async update(id: string, inputDto: UpdateBlogInputModel): Promise<boolean> {
-  //   const blog = await this.blogsRepository.getById(id);
-  //   if (!blog) throw new NotFoundException();
-  //   blog.update(inputDto);
-  //
-  //   const blogId = await this.blogsRepository.save(blog);
-  //   return !!blogId;
-  // }
-  //
-  // async delete(id: string): Promise<boolean> {
-  //   const blog = await this.blogsRepository.getById(id);
-  //   if (!blog) throw new NotFoundException();
-  //
-  //   return await this.blogsRepository.delete(id);
-  // }
-  //
-  // async createPostToBlog(
-  //   blogId: string,
-  //   inputDto: CreatePostInputModel,
-  // ): Promise<string | null> {
-  //   const blog = await this.blogsRepository.getById(blogId);
-  //   if (!blog) throw new NotFoundException(`Blog with ID ${blogId} not found`);
-  //
-  //   const post = Post.create(blog, inputDto);
-  //
-  //   return await this.postsRepository.save(post);
-  // }
+  async update(
+    userId: string,
+    commentId: string,
+    inputDto: UpdateCommentInputModel,
+  ): Promise<boolean> {
+    const comment = await this.commentsRepository.getById(commentId);
+    if (!comment) throw new NotFoundException();
+    if (userId !== comment.userId) throw new ForbiddenException();
 
-  // async updatePost(
-  //   blogId: string,
-  //   postId: string,
-  //   inputDto: UpdatePostInputModel,
-  // ): Promise<boolean> {
-  //   const { title, shortDescription, content } = inputDto;
-  //
-  //   const blog = await this.blogsRepository.getById(blogId);
-  //   if (!blog) throw new NotFoundException(`Blog with ID ${blogId} not found`);
-  //
-  //   const post = await this.postsRepository.getById(postId);
-  //   if (!post) throw new NotFoundException(`Post with ID ${postId} not found`);
-  //   if (post.blogId !== blogId) throw new ForbiddenException();
-  //   post.title = title;
-  //   post.shortDescription = shortDescription;
-  //   post.content = content;
-  //
-  //   const postIdUpd = await this.postsRepository.save(post);
-  //
-  //   return !!postIdUpd;
-  // }
+    comment.update(inputDto);
 
-  // async deletePost(blogId: string, postId: string): Promise<boolean> {
-  //   const blog = await this.blogsRepository.getById(blogId);
-  //   if (!blog) throw new NotFoundException(`Blog with ID ${blogId} not found`);
-  //
-  //   const post = await this.postsRepository.getById(postId);
-  //   if (!post) throw new NotFoundException(`Post with ID ${postId} not found`);
-  //   if (post.blogId !== blogId) throw new ForbiddenException();
-  //
-  //   return await this.postsRepository.delete(postId);
-  // }
+    const updCommentId = await this.commentsRepository.save(comment);
+    return !!updCommentId;
+  }
+
+  async delete(userId: string, commentId: string): Promise<boolean> {
+    const comment = await this.commentsRepository.getById(commentId);
+    if (!comment) throw new NotFoundException();
+    if (userId !== comment.userId) throw new ForbiddenException();
+
+    return await this.commentsRepository.delete(commentId);
+  }
 }
