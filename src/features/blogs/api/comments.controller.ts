@@ -18,12 +18,15 @@ import { CommentsService } from '../application/services/comments.service';
 import { UserIdFromAcToken } from '../../../infrastructure/decorators/transform/userId-from-ac-token.decorator';
 import { AuthBearerGuard } from '../../../infrastructure/guards/auth.bearer.guard';
 import { UserId } from '../../../infrastructure/decorators/transform/userId.decorator';
+import { UpdateCommentLikeStatusInputModel } from './models/input/update-comment-like-status.input.model';
+import { LikesCommentService } from '../application/services/likes-comment.service';
 
 @Controller(PATH.COMMENTS)
 export class CommentsController {
   constructor(
     private commentsQueryRepository: CommentsQueryRepository,
     private commentsService: CommentsService,
+    private likesCommentService: LikesCommentService,
   ) {}
 
   @Get(':id')
@@ -31,7 +34,7 @@ export class CommentsController {
     @Param('id') id: string,
     @UserIdFromAcToken() userId: string | undefined,
   ): Promise<CommentOutputModel> {
-    const comment = await this.commentsQueryRepository.getById(id);
+    const comment = await this.commentsQueryRepository.getById(id, userId);
     if (!comment) throw new NotFoundException();
 
     return comment;
@@ -64,6 +67,24 @@ export class CommentsController {
   ) {
     const isDeleted = await this.commentsService.delete(userId, commentId);
     if (!isDeleted) throw new BadRequestException();
+
+    return;
+  }
+
+  @UseGuards(AuthBearerGuard)
+  @Put(':commentId/like-status')
+  @HttpCode(204)
+  async updateCommentLikeStatus(
+    @Param('commentId') commentId: string,
+    @UserId() userId: string,
+    @Body() inputDto: UpdateCommentLikeStatusInputModel,
+  ) {
+    const isUpdated = await this.likesCommentService.update(
+      userId,
+      commentId,
+      inputDto,
+    );
+    if (!isUpdated) throw new BadRequestException();
 
     return;
   }

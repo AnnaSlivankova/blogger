@@ -9,7 +9,7 @@ export class CommentLikeStatus extends BaseEntity {
   @Column({
     type: 'character varying',
     length: 10,
-    nullable: false,
+    nullable: true,
     collation: 'C',
   })
   public likeStatus: string;

@@ -16,6 +16,8 @@ export class CommentOutputModel {
 //MAPPER
 export const commentOutputModelMapper = (
   comment: Comment,
+  likesCount?: number,
+  dislikesCount?: number,
 ): CommentOutputModel => {
   const outputModel = new CommentOutputModel();
   outputModel.id = comment.id;
@@ -26,9 +28,11 @@ export const commentOutputModelMapper = (
   };
   outputModel.createdAt = comment.createdAt.toISOString();
   outputModel.likesInfo = {
-    likesCount: 0,
-    dislikesCount: 0,
-    myStatus: LikeStatuses.NONE,
+    likesCount,
+    dislikesCount,
+    myStatus: !!comment.likes[0]
+      ? (comment.likes[0].likeStatus as LikeStatuses)
+      : LikeStatuses.NONE,
   };
 
   return outputModel;

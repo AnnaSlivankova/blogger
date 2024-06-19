@@ -17,10 +17,13 @@ import { CommentsService } from './application/services/comments.service';
 import { CommentsQueryRepository } from './infrastructure/comments-query.repository';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
+import { CommentLikeStatus } from './domain/comment-like-status.entity';
+import { LikesCommentService } from './application/services/likes-comment.service';
+import { LikesCommentRepository } from './infrastructure/likes-comment.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Blog, Post, Comment]),
+    TypeOrmModule.forFeature([Blog, Post, Comment, CommentLikeStatus]),
     UsersModule,
     AuthModule,
   ],
@@ -39,6 +42,8 @@ import { AuthModule } from '../auth/auth.module';
     CommentsService,
     CommentsRepository,
     CommentsQueryRepository,
+    LikesCommentService,
+    LikesCommentRepository,
   ],
   exports: [BlogsService],
 })

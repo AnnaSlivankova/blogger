@@ -66,7 +66,10 @@ export class PostsController {
     });
     if (!commentId) throw new BadRequestException();
 
-    const comment = await this.commentsQueryRepository.getById(commentId);
+    const comment = await this.commentsQueryRepository.getById(
+      commentId,
+      //userId,
+    );
     if (!comment) throw new BadRequestException();
 
     res.status(201).send(comment);
