@@ -20,10 +20,17 @@ import { AuthModule } from '../auth/auth.module';
 import { CommentLikeStatus } from './domain/comment-like-status.entity';
 import { LikesCommentService } from './application/services/likes-comment.service';
 import { LikesCommentRepository } from './infrastructure/likes-comment.repository';
+import { PostLikeStatus } from './domain/post-like-status.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Blog, Post, Comment, CommentLikeStatus]),
+    TypeOrmModule.forFeature([
+      Blog,
+      Post,
+      Comment,
+      CommentLikeStatus,
+      PostLikeStatus,
+    ]),
     UsersModule,
     AuthModule,
   ],
