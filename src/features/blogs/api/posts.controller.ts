@@ -3,9 +3,11 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   NotFoundException,
   Param,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -23,6 +25,9 @@ import { CommentsQueryRepository } from '../infrastructure/comments-query.reposi
 import { AuthBearerGuard } from '../../../infrastructure/guards/auth.bearer.guard';
 import { Request, Response } from 'express';
 import { UserIdFromAcToken } from '../../../infrastructure/decorators/transform/userId-from-ac-token.decorator';
+import { UserId } from '../../../infrastructure/decorators/transform/userId.decorator';
+import { UpdatePostLikeStatusInputModel } from './models/input/update-post-like-status.input.model';
+import { LikesPostService } from '../application/services/likes-post.service';
 
 @Controller(PATH.POSTS)
 export class PostsController {
@@ -30,6 +35,7 @@ export class PostsController {
     private postsQueryRepository: PostsQueryRepository,
     private commentsService: CommentsService,
     private commentsQueryRepository: CommentsQueryRepository,
+    private likesPostService: LikesPostService,
   ) {}
 
   @Get()
@@ -93,5 +99,23 @@ export class PostsController {
     if (!comments) throw new NotFoundException();
 
     return comments;
+  }
+
+  @UseGuards(AuthBearerGuard)
+  @Put(':postId/like-status')
+  @HttpCode(204)
+  async updatePostLikeStatus(
+    @Param('postId') postId: string,
+    @UserId() userId: string,
+    @Body() inputDto: UpdatePostLikeStatusInputModel,
+  ) {
+    const isUpdated = await this.likesPostService.update(
+      userId,
+      postId,
+      inputDto,
+    );
+    if (!isUpdated) throw new BadRequestException();
+
+    return;
   }
 }

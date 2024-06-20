@@ -21,6 +21,8 @@ import { CommentLikeStatus } from './domain/comment-like-status.entity';
 import { LikesCommentService } from './application/services/likes-comment.service';
 import { LikesCommentRepository } from './infrastructure/likes-comment.repository';
 import { PostLikeStatus } from './domain/post-like-status.entity';
+import { LikesPostService } from './application/services/likes-post.service';
+import { LikesPostRepository } from './infrastructure/likes-post.repository';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { PostLikeStatus } from './domain/post-like-status.entity';
     CommentsQueryRepository,
     LikesCommentService,
     LikesCommentRepository,
+    LikesPostService,
+    LikesPostRepository,
   ],
   exports: [BlogsService],
 })
