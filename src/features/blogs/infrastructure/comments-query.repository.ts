@@ -11,7 +11,8 @@ import {
   QueryParams,
   SortDirection,
 } from '../../../infrastructure/models/query.params';
-import { getLogger } from 'nodemailer/lib/shared';
+import { CommentLikeStatus } from '../domain/comment-like-status.entity';
+import { LikeStatuses } from '../api/models/like-statuses.enum';
 
 @Injectable()
 export class CommentsQueryRepository {
@@ -28,18 +29,18 @@ export class CommentsQueryRepository {
       const queryBuilderForComment = this.commentsRepository
         .createQueryBuilder('comment')
         .leftJoinAndSelect('comment.user', 'user')
-        .leftJoinAndSelect('comment.post', 'post')
-        .where('comment.id = :id', { id });
+        .leftJoinAndSelect('comment.post', 'post');
       if (userId) {
-        queryBuilderForComment.addSelect((qb) =>
-          qb
-            .select()
-            .from('comment.likes', 'like')
-            .where('like.userId = :userId', { userId }),
+        queryBuilderForComment.addSelect(
+          (qb) =>
+            qb
+              .select('like.likeStatus')
+              .from(CommentLikeStatus, 'like')
+              .where('like.userId = :userId', { userId })
+              .andWhere('comment.id = like.commentId'),
+          'likeStatus',
         );
-        // .leftJoinAndSelect('comment.likes', 'like')
-        // .andWhere('like.userId = :userId', { userId })
-        // .distinct(true);
+        queryBuilderForComment.where('comment.id = :id', { id });
       }
 
       const queryBuilderForCount = this.commentsRepository
@@ -59,15 +60,19 @@ export class CommentsQueryRepository {
         .setParameter('dislikeStatus', 'Dislike')
         .groupBy('comment.id');
 
-      const result = await queryBuilderForComment.getOne();
+      const result = await queryBuilderForComment.getRawOne();
+      console.log(result, 'res');
 
       const rawCount = await queryBuilderForCount.getRawOne();
       const likes = +rawCount.likeCount;
       const dislikes = +rawCount.dislikeCount;
-      console.log(result, ' result');
-      const comment = result.likes ? result : { ...result, likes: [] };
 
-      return commentOutputModelMapper(comment as Comment, likes, dislikes);
+      return commentOutputModelMapper(
+        result,
+        likes,
+        dislikes,
+        result.likeStatus ?? LikeStatuses.NONE,
+      );
     } catch (e) {
       console.log('CommentsQueryRepository/getById', e);
       return null;
@@ -80,6 +85,7 @@ export class CommentsQueryRepository {
     query: QueryParams,
   ): Promise<PaginationOutputModel<CommentOutputModel> | null> {
     try {
+      console.log('userId', userId);
       const { pageSize, pageNumber, sortDirection, sortBy } = query;
       const skip = query.getSkipItemsCount();
       const direction = sortDirection === SortDirection.ASC ? 'ASC' : 'DESC';
@@ -87,20 +93,53 @@ export class CommentsQueryRepository {
       const queryBuilder = this.commentsRepository
         .createQueryBuilder('comment')
         .leftJoinAndSelect('comment.user', 'user')
-        .leftJoinAndSelect('comment.post', 'post')
-        .leftJoinAndMapMany(
-          'comment.likes',
-          'comment.likes',
-          'like',
-          userId ? 'like.userId = :userId' : '1=1',
-          { userId },
-        )
+        .leftJoinAndSelect('comment.post', 'post');
+      if (userId) {
+        queryBuilder.addSelect(
+          (qb) =>
+            qb
+              .select('like.likeStatus')
+              .from(CommentLikeStatus, 'like')
+              .andWhere('comment.id = like.commentId'),
+          'likeStatus',
+        );
+      }
+      //
+      // .leftJoinAndMapMany(
+      //   'comment.likes',
+      //   'comment.likes',
+      //   'like',
+      //   userId ? 'like.userId = :userId' : '1=1',
+      //   { userId },
+      // )
+      // .leftJoinAndMapMany(
+      //   'comment.likes',
+      //   'comment.likes',
+      //   'like',
+      //   // Conditionally include userId in the join condition
+      //   userId
+      //     ? 'like.userId = :userId AND like.commentId = comment.id'
+      //     : '1=1',
+      //   { userId },
+      // )
+      queryBuilder
         .where('comment.postId = :postId', { postId })
         .orderBy(`comment.${sortBy}`, direction)
         .skip(skip)
         .take(pageSize);
 
       const [items, totalCount] = await queryBuilder.getManyAndCount();
+      const res = await queryBuilder.getRawAndEntities();
+      const entities = res.entities;
+      const test = res.entities.length;
+      const totalCountEntities = await queryBuilder.getCount();
+      const likes = res.raw;
+
+      // console.log('entities', entities);
+      // console.log('test', test);
+      // console.log('totalCountEntities', totalCountEntities);
+      // console.log('totalCount', totalCount);
+      // console.log('likes', likes);
 
       const commentIds = items.map((c) => c.id);
 
@@ -130,16 +169,28 @@ export class CommentsQueryRepository {
         pageSize,
         pagesCount,
         totalCount,
-        items: items.map((c) => {
+        items: res.raw.map((rc) => {
           const likeDislikeCounts = rawLikes.filter(
-            (el) => el.commentId === c.id,
+            (el) => el.commentId === rc.comment_id,
           );
+          console.log(likeDislikeCounts);
           return commentOutputModelMapper(
-            c,
+            rc,
             +likeDislikeCounts[0].likeCount || 0,
             +likeDislikeCounts[0].dislikeCount || 0,
+            rc.likeStatus ?? LikeStatuses.NONE,
           );
         }),
+        // items: items.map((c) => {
+        //   const likeDislikeCounts = rawLikes.filter(
+        //     (el) => el.commentId === c.id,
+        //   );
+        //   return commentOutputModelMapper(
+        //     c,
+        //     +likeDislikeCounts[0].likeCount || 0,
+        //     +likeDislikeCounts[0].dislikeCount || 0,
+        //   );
+        // }),
       };
     } catch (e) {
       console.log('CommentsQueryRepository/getAll', e);
