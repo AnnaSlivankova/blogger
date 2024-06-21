@@ -48,8 +48,11 @@ export class PostsController {
   }
 
   @Get(':id')
-  async getPost(@Param('id') id: string): Promise<PostOutputModel> {
-    const post = await this.postsQueryRepository.getPostById(id);
+  async getPost(
+    @Param('id') id: string,
+    @UserIdFromAcToken() userId: string | undefined,
+  ): Promise<PostOutputModel> {
+    const post = await this.postsQueryRepository.getPostById(id, userId);
     if (!post) throw new NotFoundException();
 
     return post;

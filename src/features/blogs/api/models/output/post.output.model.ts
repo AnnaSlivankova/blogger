@@ -1,4 +1,5 @@
 import { Post } from '../../../domain/post.entity';
+import { LikeStatuses } from '../like-statuses.enum';
 
 export class PostOutputModel {
   id: string;
@@ -22,7 +23,9 @@ export class PostOutputModel {
 
 //MAPPER
 export const postOutputModelMapper = (
-  post: Post,
+  post: any,
+  likesCount?: number,
+  dislikesCount?: number,
   myStatus?: any,
   newestLikes?: any[],
 ): PostOutputModel => {
@@ -32,13 +35,13 @@ export const postOutputModelMapper = (
   outputModel.shortDescription = post.shortDescription;
   outputModel.content = post.content;
   outputModel.blogId = post.blogId;
-  outputModel.blogName = post.blog.name;
+  outputModel.blogName = post.blogName;
   outputModel.createdAt = post.createdAt.toISOString();
   outputModel.extendedLikesInfo = {
-    dislikesCount: 0,
-    likesCount: 0,
-    myStatus: 'None',
-    newestLikes: [],
+    dislikesCount,
+    likesCount,
+    myStatus: post.myStatus || LikeStatuses.NONE,
+    newestLikes: post.newestLikes || [],
   };
 
   return outputModel;
