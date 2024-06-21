@@ -1,6 +1,8 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../infrastructure/entities/base.entity';
 import { Blog } from './blog.entity';
+import { Comment } from './comment.entity';
+import { PostLikeStatus } from './post-like-status.entity';
 
 @Entity()
 export class Post extends BaseEntity {
@@ -37,6 +39,12 @@ export class Post extends BaseEntity {
 
   @Column()
   blogId: string;
+
+  @OneToMany(() => Comment, (c) => c.user)
+  comments: Comment[];
+
+  @OneToMany(() => PostLikeStatus, (pl) => pl.post)
+  likes: PostLikeStatus[];
 
   public static create(
     blog: Blog,

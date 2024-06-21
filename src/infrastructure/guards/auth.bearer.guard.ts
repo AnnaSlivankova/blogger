@@ -23,7 +23,7 @@ export class AuthBearerGuard implements CanActivate {
         secret: CONFIG.JWT_SECRET,
       });
 
-      request['user'] = payload;
+      request['userId'] = payload.userId;
     } catch {
       throw new UnauthorizedException('accessToken is invalid or expired');
     }
