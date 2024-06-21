@@ -47,6 +47,16 @@ export class DropAllDataController {
           .delete()
           .from(Comment)
           .execute(),
+        // this.entityManager
+        //   .createQueryBuilder()
+        //   .delete()
+        //   .from(CommentLikeStatus)
+        //   .execute(),
+        // this.entityManager
+        //   .createQueryBuilder()
+        //   .delete()
+        //   .from(PostLikeStatus)
+        //   .execute(),
       ]);
       return;
     } catch (e) {

@@ -1,4 +1,3 @@
-import { Post } from '../../../domain/post.entity';
 import { LikeStatuses } from '../like-statuses.enum';
 
 export class PostOutputModel {
@@ -24,10 +23,8 @@ export class PostOutputModel {
 //MAPPER
 export const postOutputModelMapper = (
   post: any,
-  likesCount?: number,
-  dislikesCount?: number,
-  myStatus?: any,
-  newestLikes?: any[],
+  likesCount: number,
+  dislikesCount: number,
 ): PostOutputModel => {
   const outputModel = new PostOutputModel();
   outputModel.id = post.id;

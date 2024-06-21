@@ -12,7 +12,6 @@ import {
   SortDirection,
 } from '../../../infrastructure/models/query.params';
 import { CommentLikeStatus } from '../domain/comment-like-status.entity';
-import { LikeStatuses } from '../api/models/like-statuses.enum';
 
 @Injectable()
 export class CommentsQueryRepository {
@@ -26,10 +25,11 @@ export class CommentsQueryRepository {
     userId?: string | undefined,
   ): Promise<CommentOutputModel | null> {
     try {
+      //qb to get comment with myStatus
       const queryBuilderForComment = this.commentsRepository
         .createQueryBuilder('comment')
         .leftJoinAndSelect('comment.user', 'user')
-        .leftJoinAndSelect('comment.post', 'post');
+        .select(['comment.*', 'user.login AS "userLogin"']);
       if (userId) {
         queryBuilderForComment.addSelect(
           (qb) =>
@@ -38,11 +38,12 @@ export class CommentsQueryRepository {
               .from(CommentLikeStatus, 'like')
               .where('like.userId = :userId', { userId })
               .andWhere('comment.id = like.commentId'),
-          'likeStatus',
+          'myStatus',
         );
-        queryBuilderForComment.where('comment.id = :id', { id });
       }
+      queryBuilderForComment.where('comment.id = :id', { id });
 
+      //qb to get likes/dislikes count
       const queryBuilderForCount = this.commentsRepository
         .createQueryBuilder('comment')
         .leftJoin('comment.likes', 'comment_like_status')
@@ -60,18 +61,13 @@ export class CommentsQueryRepository {
         .setParameter('dislikeStatus', 'Dislike')
         .groupBy('comment.id');
 
-      const result = await queryBuilderForComment.getRawOne();
-      console.log(result, 'res');
-
+      const rawComment = await queryBuilderForComment.getRawOne();
       const rawCount = await queryBuilderForCount.getRawOne();
-      const likes = +rawCount.likeCount;
-      const dislikes = +rawCount.dislikeCount;
 
       return commentOutputModelMapper(
-        result,
-        likes,
-        dislikes,
-        result.likeStatus ?? LikeStatuses.NONE,
+        rawComment,
+        +rawCount.likeCount,
+        +rawCount.dislikeCount,
       );
     } catch (e) {
       console.log('CommentsQueryRepository/getById', e);
@@ -85,64 +81,43 @@ export class CommentsQueryRepository {
     query: QueryParams,
   ): Promise<PaginationOutputModel<CommentOutputModel> | null> {
     try {
-      console.log('userId', userId);
       const { pageSize, pageNumber, sortDirection, sortBy } = query;
       const skip = query.getSkipItemsCount();
       const direction = sortDirection === SortDirection.ASC ? 'ASC' : 'DESC';
 
-      const queryBuilder = this.commentsRepository
+      //qb to get all post comments with myStatus
+      const queryBuilderForComment = this.commentsRepository
         .createQueryBuilder('comment')
         .leftJoinAndSelect('comment.user', 'user')
-        .leftJoinAndSelect('comment.post', 'post');
+        .leftJoinAndSelect('comment.post', 'post')
+        .select([
+          'comment.*',
+          'user.login AS "userLogin"',
+          'COUNT(*) OVER() AS "totalCount"',
+        ]);
       if (userId) {
-        queryBuilder.addSelect(
+        queryBuilderForComment.addSelect(
           (qb) =>
             qb
               .select('like.likeStatus')
               .from(CommentLikeStatus, 'like')
+              .where('like.userId = :userId', { userId })
               .andWhere('comment.id = like.commentId'),
-          'likeStatus',
+          'myStatus',
         );
       }
-      //
-      // .leftJoinAndMapMany(
-      //   'comment.likes',
-      //   'comment.likes',
-      //   'like',
-      //   userId ? 'like.userId = :userId' : '1=1',
-      //   { userId },
-      // )
-      // .leftJoinAndMapMany(
-      //   'comment.likes',
-      //   'comment.likes',
-      //   'like',
-      //   // Conditionally include userId in the join condition
-      //   userId
-      //     ? 'like.userId = :userId AND like.commentId = comment.id'
-      //     : '1=1',
-      //   { userId },
-      // )
-      queryBuilder
+      queryBuilderForComment
         .where('comment.postId = :postId', { postId })
         .orderBy(`comment.${sortBy}`, direction)
-        .skip(skip)
-        .take(pageSize);
+        .offset(skip)
+        .limit(pageSize);
 
-      const [items, totalCount] = await queryBuilder.getManyAndCount();
-      const res = await queryBuilder.getRawAndEntities();
-      const entities = res.entities;
-      const test = res.entities.length;
-      const totalCountEntities = await queryBuilder.getCount();
-      const likes = res.raw;
+      const rawComments = await queryBuilderForComment.getRawMany();
+      const totalCount = +rawComments[0].totalCount || 0;
+      const pagesCount = Math.ceil(totalCount / pageSize);
+      const commentIds = rawComments.map((c) => c.id);
 
-      // console.log('entities', entities);
-      // console.log('test', test);
-      // console.log('totalCountEntities', totalCountEntities);
-      // console.log('totalCount', totalCount);
-      // console.log('likes', likes);
-
-      const commentIds = items.map((c) => c.id);
-
+      //qb to get likes/dislikes count
       const queryBuilderForCount = this.commentsRepository
         .createQueryBuilder('comment')
         .leftJoin('comment.likes', 'comment_like_status')
@@ -162,35 +137,28 @@ export class CommentsQueryRepository {
         .groupBy('comment.id');
 
       const rawLikes = await queryBuilderForCount.getRawMany();
-      const pagesCount = Math.ceil(totalCount / pageSize);
+
+      const coll = new Map();
+      rawLikes.forEach((item) => {
+        coll.set(item.commentId, {
+          likesCount: item.likeCount,
+          dislikesCount: item.dislikeCount,
+        });
+      });
 
       return {
         page: pageNumber,
         pageSize,
         pagesCount,
         totalCount,
-        items: res.raw.map((rc) => {
-          const likeDislikeCounts = rawLikes.filter(
-            (el) => el.commentId === rc.comment_id,
-          );
-          console.log(likeDislikeCounts);
+        items: rawComments.map((c) => {
+          const likesInfo = coll.get(c.id);
           return commentOutputModelMapper(
-            rc,
-            +likeDislikeCounts[0].likeCount || 0,
-            +likeDislikeCounts[0].dislikeCount || 0,
-            rc.likeStatus ?? LikeStatuses.NONE,
+            c,
+            +likesInfo.likesCount,
+            +likesInfo.dislikesCount,
           );
         }),
-        // items: items.map((c) => {
-        //   const likeDislikeCounts = rawLikes.filter(
-        //     (el) => el.commentId === c.id,
-        //   );
-        //   return commentOutputModelMapper(
-        //     c,
-        //     +likeDislikeCounts[0].likeCount || 0,
-        //     +likeDislikeCounts[0].dislikeCount || 0,
-        //   );
-        // }),
       };
     } catch (e) {
       console.log('CommentsQueryRepository/getAll', e);

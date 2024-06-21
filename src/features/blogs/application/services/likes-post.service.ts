@@ -32,13 +32,12 @@ export class LikesPostService {
       userId,
       postId,
     );
-    console.log(currentLikeStatus);
+
     if (!currentLikeStatus) {
       const postLike = PostLikeStatus.create(user, post, inputDto);
       return await this.likesPostRepository.save(postLike);
     } else {
       currentLikeStatus.update(inputDto);
-
       return await this.likesPostRepository.save(currentLikeStatus);
     }
   }

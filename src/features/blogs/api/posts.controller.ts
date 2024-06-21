@@ -40,9 +40,10 @@ export class PostsController {
 
   @Get()
   async getAllPosts(
+    @UserIdFromAcToken() userId: string | undefined,
     @Query() query: QueryParams,
   ): Promise<PaginationOutputModel<PostOutputModel>> {
-    const posts = await this.postsQueryRepository.getAll(query);
+    const posts = await this.postsQueryRepository.getAll(query, userId);
     if (!posts) throw new BadRequestException();
     return posts;
   }
@@ -75,10 +76,7 @@ export class PostsController {
     });
     if (!commentId) throw new BadRequestException();
 
-    const comment = await this.commentsQueryRepository.getById(
-      commentId,
-      //userId,
-    );
+    const comment = await this.commentsQueryRepository.getById(commentId);
     if (!comment) throw new BadRequestException();
 
     res.status(201).send(comment);
